@@ -1,14 +1,14 @@
 export const CATEGORIES = [
-  { id: 'seguridad', label: 'Seguridad', icon: '🛡️', color: 'bg-red-100 text-red-700 border-red-200' },
-  { id: 'educacion', label: 'Educación', icon: '📚', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { id: 'salud', label: 'Salud', icon: '🏥', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  { id: 'transporte', label: 'Transporte', icon: '🚌', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-  { id: 'economia', label: 'Economía', icon: '💼', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { id: 'medio-ambiente', label: 'Medio Ambiente', icon: '🌿', color: 'bg-green-100 text-green-700 border-green-200' },
-  { id: 'tecnologia', label: 'Tecnología', icon: '💻', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { id: 'justicia', label: 'Justicia', icon: '⚖️', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-  { id: 'cultura', label: 'Cultura', icon: '🎨', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-  { id: 'vivienda', label: 'Vivienda', icon: '🏠', color: 'bg-teal-100 text-teal-700 border-teal-200' },
+  { id: 'seguridad',      label: 'Seguridad',      icon: '🛡️', color: 'bg-red-600 text-white border-red-700' },
+  { id: 'educacion',      label: 'Educación',      icon: '📚', color: 'bg-blue-600 text-white border-blue-700' },
+  { id: 'salud',          label: 'Salud',          icon: '🏥', color: 'bg-emerald-600 text-white border-emerald-700' },
+  { id: 'transporte',     label: 'Transporte',     icon: '🚌', color: 'bg-orange-500 text-white border-orange-600' },
+  { id: 'economia',       label: 'Economía',       icon: '💼', color: 'bg-amber-500 text-white border-amber-600' },
+  { id: 'medio-ambiente', label: 'Medio Ambiente', icon: '🌿', color: 'bg-green-600 text-white border-green-700' },
+  { id: 'tecnologia',     label: 'Tecnología',     icon: '💻', color: 'bg-violet-600 text-white border-violet-700' },
+  { id: 'justicia',       label: 'Justicia',       icon: '⚖️', color: 'bg-indigo-600 text-white border-indigo-700' },
+  { id: 'cultura',        label: 'Cultura',        icon: '🎨', color: 'bg-pink-600 text-white border-pink-700' },
+  { id: 'vivienda',       label: 'Vivienda',       icon: '🏠', color: 'bg-teal-600 text-white border-teal-700' },
 ];
 
 export const MOCK_USERS = [

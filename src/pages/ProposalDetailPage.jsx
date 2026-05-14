@@ -18,9 +18,9 @@ export default function ProposalDetailPage() {
   const { proposals, voteProposal, votedProposals, isLoggedIn, showNotification, currentUser } = useApp();
   const navigate = useNavigate();
 
-  const proposal = proposals.find(p => p.id === Number(id));
+  const proposal = proposals.find(p => p.id === id);
   const [comment, setComment] = useState('');
-  const [comments, setComments] = useState(MOCK_COMMENTS.filter(c => c.proposalId === Number(id)));
+  const [comments, setComments] = useState(MOCK_COMMENTS.filter(c => String(c.proposalId) === id));
   const [showShare, setShowShare] = useState(false);
   const [activeTab, setActiveTab] = useState('debate');
 

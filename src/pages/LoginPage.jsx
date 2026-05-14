@@ -1,36 +1,97 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, MapPin, LogIn, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
+import { createUserProfile, getUserProfile } from '../lib/firebaseService';
 import { useApp } from '../context/AppContext';
-import { MOCK_USERS } from '../data/mockData';
+
+const REGIONS = [
+  'Lima', 'Arequipa', 'Cusco', 'Trujillo', 'Piura',
+  'Chiclayo', 'Iquitos', 'Huancayo', 'Puno', 'Tacna',
+];
 
 export default function LoginPage() {
-  const { login } = useApp();
+  const { showNotification } = useApp();
   const navigate = useNavigate();
-  const [isRegister, setIsRegister] = useState(false);
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isRegister, setIsRegister]   = useState(false);
+  const [showPass, setShowPass]       = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
   const [form, setForm] = useState({ email: '', password: '', name: '', region: 'Lima' });
 
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const clearError = () => setError('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    login(isRegister ? { ...MOCK_USERS[0], name: form.name || 'Nuevo Usuario', avatar: (form.name || 'NU').slice(0, 2).toUpperCase() } : MOCK_USERS[0]);
-    setLoading(false);
-    navigate('/');
+    clearError();
+
+    try {
+      if (isRegister) {
+        const { user } = await createUserWithEmailAndPassword(auth, form.email, form.password);
+        await updateProfile(user, { displayName: form.name });
+        const avatar = form.name.slice(0, 2).toUpperCase();
+        await createUserProfile(user.uid, {
+          name:      form.name,
+          avatar,
+          region:    form.region,
+          verified:  false,
+          proposals: 0,
+          followers: 0,
+        });
+        showNotification('¡Cuenta creada exitosamente! 🎉');
+      } else {
+        await signInWithEmailAndPassword(auth, form.email, form.password);
+        showNotification('¡Bienvenido de vuelta!');
+      }
+      navigate('/');
+    } catch (err) {
+      setError(translateError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    clearError();
+    try {
+      const { user } = await signInWithPopup(auth, googleProvider);
+      const existing = await getUserProfile(user.uid);
+      if (!existing) {
+        await createUserProfile(user.uid, {
+          name:      user.displayName || 'Usuario',
+          avatar:    (user.displayName || 'US').slice(0, 2).toUpperCase(),
+          region:    'Lima',
+          verified:  false,
+          proposals: 0,
+          followers: 0,
+        });
+      }
+      showNotification('¡Bienvenido!');
+      navigate('/');
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError(translateError(err.code));
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 flex items-center justify-center px-4 pt-20">
-      {/* Decorative blobs */}
       <div className="absolute top-40 left-10 w-64 h-64 bg-peru-red/15 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-10 w-80 h-80 bg-civic-blue/15 rounded-full blur-3xl" />
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-peru-red to-peru-red-dark rounded-xl flex items-center justify-center">
@@ -47,9 +108,19 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-8">
-          {/* Google / social placeholder */}
-          <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors mb-5 shadow-sm">
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.5 26.9 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.2c3.2 7.1 10.3 12 17.8 12z"/><path fill="#1565C0" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l6.2 5.2c3.7-3.4 5.3-8.4 5.3-13.2 0-1.3-.1-2.7-.4-4z"/></svg>
+          {/* Google */}
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors mb-5 shadow-sm disabled:opacity-70"
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.5 26.9 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.2c3.2 7.1 10.3 12 17.8 12z"/>
+              <path fill="#1565C0" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l6.2 5.2c3.7-3.4 5.3-8.4 5.3-13.2 0-1.3-.1-2.7-.4-4z"/>
+            </svg>
             Continuar con Google
           </button>
 
@@ -58,6 +129,12 @@ export default function LoginPage() {
             <span className="text-gray-500 text-xs">o con tu correo</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
+
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
@@ -71,9 +148,23 @@ export default function LoginPage() {
                     onChange={e => update('name', e.target.value)}
                     placeholder="Ej: María Quispe"
                     className="w-full bg-white/10 border border-white/20 text-white rounded-xl pl-10 pr-4 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-civic-blue/50"
-                    required={isRegister}
+                    required
+                    minLength={2}
                   />
                 </div>
+              </div>
+            )}
+
+            {isRegister && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Región</label>
+                <select
+                  value={form.region}
+                  onChange={e => update('region', e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-civic-blue/50 [&>option]:bg-gray-900"
+                >
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
               </div>
             )}
 
@@ -103,6 +194,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   className="w-full bg-white/10 border border-white/20 text-white rounded-xl pl-10 pr-10 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-civic-blue/50"
                   required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -116,9 +208,7 @@ export default function LoginPage() {
 
             {!isRegister && (
               <div className="flex justify-end">
-                <a href="#" className="text-xs text-civic-blue-light hover:text-white transition-colors">
-                  ¿Olvidaste tu contraseña?
-                </a>
+                <span className="text-xs text-civic-blue-light">¿Olvidaste tu contraseña?</span>
               </div>
             )}
 
@@ -140,7 +230,7 @@ export default function LoginPage() {
           <p className="text-center text-sm text-gray-400 mt-5">
             {isRegister ? '¿Ya tienes cuenta?' : '¿Aún no tienes cuenta?'}{' '}
             <button
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => { setIsRegister(!isRegister); clearError(); }}
               className="text-civic-blue-light font-semibold hover:text-white transition-colors"
             >
               {isRegister ? 'Iniciar sesión' : 'Regístrate gratis'}
@@ -149,10 +239,25 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-5">
-          Al continuar, aceptas los <a href="#" className="text-gray-400 hover:text-white">Términos de uso</a> y la{' '}
-          <a href="#" className="text-gray-400 hover:text-white">Política de privacidad</a>
+          Al continuar, aceptas los{' '}
+          <span className="text-gray-400">Términos de uso</span> y la{' '}
+          <span className="text-gray-400">Política de privacidad</span>
         </p>
       </div>
     </div>
   );
+}
+
+function translateError(code) {
+  const map = {
+    'auth/user-not-found':       'No existe una cuenta con ese correo.',
+    'auth/wrong-password':       'Contraseña incorrecta.',
+    'auth/invalid-credential':   'Correo o contraseña incorrectos.',
+    'auth/email-already-in-use': 'Ya existe una cuenta con ese correo.',
+    'auth/weak-password':        'La contraseña debe tener al menos 6 caracteres.',
+    'auth/invalid-email':        'El correo no tiene un formato válido.',
+    'auth/too-many-requests':    'Demasiados intentos. Intenta más tarde.',
+    'auth/network-request-failed': 'Error de red. Verifica tu conexión.',
+  };
+  return map[code] || 'Ocurrió un error. Inténtalo de nuevo.';
 }

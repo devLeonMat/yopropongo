@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Notification from './components/Notification';
@@ -12,6 +13,16 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 
 function AppLayout() {
+  const { authLoading } = useApp();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <div className="w-10 h-10 border-4 border-white/20 border-t-peru-red rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen font-sans">
       <Navbar />
